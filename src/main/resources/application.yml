@@ -1,0 +1,9 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5544/db
+    username: user
+    password: 12345
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
