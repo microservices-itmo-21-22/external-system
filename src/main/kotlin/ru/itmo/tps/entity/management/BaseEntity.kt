@@ -15,8 +15,7 @@ import javax.persistence.MappedSuperclass
 open class BaseEntity {
     @Id
     @GeneratedValue
-    protected var id: UUID? = null
-
+    var id: UUID? = null
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true

@@ -9,12 +9,16 @@ import javax.persistence.*
 @Getter
 @Setter
 @Table(name = "project")
-class ProjectEntity: BaseEntity() {
-    private var name: String? = null
+class ProjectEntity(
+    var name: String,
 
-    @OneToMany(fetch = FetchType.LAZY, cascade = [CascadeType.PERSIST], mappedBy = "project")
-    private var accounts: List<AccountEntity>? = null
+    @OneToMany(fetch = FetchType.EAGER, cascade = [CascadeType.PERSIST], mappedBy = "project")
+    var accounts: MutableSet<AccountEntity> = mutableSetOf()
+): BaseEntity() {
 
+    fun addAccount(account: AccountEntity) {
+        accounts.add(account)
+    }
 
     override fun toString(): String = "Project(id=$id, name=$name)"
 }
