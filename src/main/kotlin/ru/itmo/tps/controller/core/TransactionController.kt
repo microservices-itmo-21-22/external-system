@@ -1,9 +1,6 @@
-package ru.itmo.tps.controller
+package ru.itmo.tps.controller.core
 
-import org.springframework.web.bind.annotation.PostMapping
-import org.springframework.web.bind.annotation.RequestBody
-import org.springframework.web.bind.annotation.RequestMapping
-import org.springframework.web.bind.annotation.RestController
+import org.springframework.web.bind.annotation.*
 import ru.itmo.tps.dto.Transaction
 import ru.itmo.tps.dto.TransactionRequest
 import ru.itmo.tps.service.core.TransactionHandler

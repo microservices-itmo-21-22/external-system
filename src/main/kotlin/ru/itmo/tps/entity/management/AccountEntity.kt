@@ -9,19 +9,22 @@ import javax.persistence.*
 @Getter
 @Setter
 @Table(name = "account")
-class AccountEntity: BaseEntity() {
-    private var name: String? = null
+class AccountEntity(
+    id: UUID?,
+
+    var name: String?,
 
     @Enumerated(EnumType.STRING)
-    private var answerMethod: AnswerMethod? = null
+    var answerMethod: AnswerMethod?,
 
-    private var clientSecret: UUID? = null
+    var clientSecret: UUID?,
 
-    private var callbackUrl: String? = null
+    var callbackUrl: String?,
 
     @ManyToOne
     @JoinColumn(name = "project_id", nullable = false)
-    private var project: ProjectEntity? = null
+    var project: ProjectEntity?
+): BaseEntity(id) {
 
     override fun toString(): String = "Account(id=$id, name=$name, answerMethod=$answerMethod)"
 }
