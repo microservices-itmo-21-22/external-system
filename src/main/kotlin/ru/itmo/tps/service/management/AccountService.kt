@@ -1,28 +1,37 @@
 package ru.itmo.tps.service.management
 
 import org.springframework.cache.annotation.CacheEvict
+import org.springframework.cache.annotation.CachePut
 import org.springframework.cache.annotation.Cacheable
-import org.springframework.data.jpa.repository.JpaRepository
+import org.springframework.cache.annotation.Caching
 import org.springframework.stereotype.Service
 import ru.itmo.tps.dto.management.Account
 import ru.itmo.tps.dto.management.AccountCreateRequest
 import ru.itmo.tps.entity.management.AccountEntity
 import ru.itmo.tps.entity.management.AnswerMethod
-import ru.itmo.tps.entity.management.ProjectEntity
+import ru.itmo.tps.entity.toDto
+import ru.itmo.tps.entity.toEntity
 import ru.itmo.tps.exception.EntityNotFoundException
 import ru.itmo.tps.exception.EntityNotValidException
+import ru.itmo.tps.repository.AccountRepository
 import java.util.*
 
 @Service
 class AccountService(
-    val repository: JpaRepository<AccountEntity, UUID>,
-    val projectService: ProjectService
+    private val repository: AccountRepository,
+    private val projectService: ProjectService,
+    private val accountLimitsService: AccountLimitsService
 ) {
-    @Cacheable(value = ["accountCache"], key = "#id")
-    fun findById(id: UUID): Account {
-        val accountEntity = repository.findById(id).orElseThrow { EntityNotFoundException(id) }
-        return toDto(accountEntity)
-    }
+    @Cacheable(value = ["accountCache"], key = "#id") // todo remove caching by id? is not used in transactions
+    fun findById(id: UUID): Account = repository.findById(id).orElseThrow { EntityNotFoundException(id) }.toDto()
+
+    @Caching(
+        put = [CachePut(value = ["accountCache"], key = "#result.clientSecret")],
+        cacheable = [Cacheable(value = ["accountCache"], key = "#clientSecret")]
+    )
+    fun findByClientSecret(clientSecret: UUID): Account = repository.findByClientSecret(clientSecret)
+        .orElseThrow { EntityNotFoundException("Cannot find Account with client secret: $clientSecret") }
+        .toDto()
 
     fun create(createRequest: AccountCreateRequest): Account {
         val project = projectService.findById(createRequest.projectId)
@@ -33,36 +42,40 @@ class AccountService(
             createRequest.answerMethod,
             UUID.randomUUID(),
             createRequest.callbackUrl,
-            ProjectService.toEntity(project)
+            project.toEntity(),
+            accountLimitsService.createDefault().toEntity()
         )
 
         validateAndThrow(accountEntity)
 
         accountEntity = repository.save(accountEntity)
-        return toDto(accountEntity)
+        return accountEntity.toDto()
     }
 
-    @CacheEvict(value = ["accountCache", "projectCache"], key = "#account.id")
-    fun save(account: Account): Account {
-        var accountEntity = toEntity(account)
-        accountEntity = repository.save(accountEntity)
-        return toDto(accountEntity)
-    }
-
-    @CacheEvict(value = ["accountCache", "projectCache"], key = "#id")
+    @Caching(
+        evict = [
+            CacheEvict(value = ["accountCache"], key = "#id"),
+            CacheEvict(value = ["accountCache"], key = "#result.clientSecret"),
+            CacheEvict(value = ["projectCache"], key = "#result.projectId")
+        ]
+    )
     fun update(id: UUID, newAccount: Account): Account {
         val oldEntity = repository.findById(id).orElseThrow { EntityNotFoundException(id) }
-        map(toEntity(newAccount), oldEntity)
+        map(newAccount.toEntity(), oldEntity)
 
         validateAndThrow(oldEntity)
 
-        return toDto(repository.save(oldEntity))
+        return repository.save(oldEntity).toDto()
     }
 
-    @CacheEvict(value = ["accountCache", "projectCache"], key = "#id")
-    fun deleteById(id: UUID) {
-        repository.deleteById(id)
-    }
+    @Caching(
+        evict = [
+            CacheEvict(value = ["accountCache"], key = "#id"),
+            CacheEvict(value = ["accountCache"], key = "#result.clientSecret"),
+            CacheEvict(value = ["projectCache"], allEntries = true) // todo smarter project cache eviction
+        ]
+    )
+    fun deleteById(id: UUID) = repository.deleteById(id)
 
     private fun validateAndThrow(accountEntity: AccountEntity) {
         if (accountEntity.answerMethod == AnswerMethod.CALLBACK && accountEntity.callbackUrl.isNullOrEmpty()) {
@@ -75,25 +88,5 @@ class AccountService(
         targetEntity.callbackUrl = entity.callbackUrl
         targetEntity.clientSecret = entity.clientSecret
         targetEntity.answerMethod = entity.answerMethod
-    }
-
-    companion object {
-        fun toEntity(dto: Account): AccountEntity = AccountEntity(
-            dto.id,
-            dto.name,
-            dto.answerMethod,
-            dto.clientSecret,
-            dto.callbackUrl,
-            ProjectEntity(dto.projectId)
-        )
-
-        fun toDto(entity: AccountEntity): Account = Account(
-            id = entity.id,
-            name = entity.name ?: "Unknown",
-            answerMethod = entity.answerMethod,
-            callbackUrl = entity.callbackUrl ?: "",
-            clientSecret = entity.clientSecret,
-            projectId = entity.project?.id
-        )
     }
 }

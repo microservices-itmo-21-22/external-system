@@ -23,8 +23,12 @@ class AccountEntity(
 
     @ManyToOne
     @JoinColumn(name = "project_id", nullable = false)
-    var project: ProjectEntity?
-): BaseEntity(id) {
+    var project: ProjectEntity?,
+
+    @OneToOne(fetch = FetchType.EAGER, cascade = [CascadeType.PERSIST])
+    @JoinColumn(name = "account_limits_id")
+    var accountLimits: AccountLimitsEntity?
+) : BaseEntity(id) {
 
     override fun toString(): String = "Account(id=$id, name=$name, answerMethod=$answerMethod)"
 }

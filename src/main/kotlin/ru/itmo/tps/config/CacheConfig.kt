@@ -16,8 +16,6 @@ class CacheConfig {
 
     @Bean
     fun cacheManager(caffeine: Caffeine<Any, Any>): CacheManager {
-        val cacheManager = CaffeineCacheManager()
-        cacheManager.setCaffeine(caffeine)
-        return cacheManager
+        return CaffeineCacheManager().also { it.setCaffeine(caffeine) }
     }
 }

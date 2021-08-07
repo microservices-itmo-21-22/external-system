@@ -10,3 +10,10 @@ spring:
 
 auth:
   token: strong
+
+executors:
+  transaction-handling:
+    queue-size: 10000
+    threads-min: 1
+    threads-max: 8
+    keep-threads-seconds: 60

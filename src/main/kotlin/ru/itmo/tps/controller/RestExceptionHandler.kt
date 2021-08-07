@@ -8,6 +8,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException
 import org.springframework.web.bind.annotation.ControllerAdvice
 import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.context.request.WebRequest
+import org.springframework.web.context.request.async.AsyncRequestTimeoutException
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler
 import ru.itmo.tps.dto.ApiError
 import ru.itmo.tps.exception.EntityNotFoundException
@@ -42,6 +43,15 @@ class RestExceptionHandler : ResponseEntityExceptionHandler() {
         request: WebRequest
     ): ResponseEntity<Any> {
         return ResponseEntity(composeApiError(ex.message ?: "Cannot serialize body"), HttpStatus.BAD_REQUEST)
+    }
+
+    override fun handleAsyncRequestTimeoutException(
+        ex: AsyncRequestTimeoutException,
+        headers: HttpHeaders,
+        status: HttpStatus,
+        webRequest: WebRequest
+    ): ResponseEntity<Any>? {
+        return ResponseEntity(composeApiError("Timeout while submitting transaction"), HttpStatus.BAD_GATEWAY)
     }
 
     private fun composeApiError(message: String): ApiError {
