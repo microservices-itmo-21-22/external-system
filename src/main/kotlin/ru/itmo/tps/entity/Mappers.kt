@@ -14,7 +14,7 @@ fun Account.toEntity(): AccountEntity = AccountEntity(
     clientSecret = this.clientSecret,
     callbackUrl = this.callbackUrl,
     project = ProjectEntity(this.projectId),
-    accountLimits = AccountLimitsEntity(this.accountLimitsId)
+    accountLimits = this.accountLimits.toEntity()
 )
 
 fun AccountEntity.toDto(): Account = Account(
@@ -24,7 +24,7 @@ fun AccountEntity.toDto(): Account = Account(
     callbackUrl = this.callbackUrl ?: "",
     clientSecret = this.clientSecret!!,
     projectId = this.project?.id!!,
-    accountLimitsId = this.accountLimits?.id!!
+    accountLimits = this.accountLimits!!.toDto()
 )
 
 fun ProjectEntity.toDto(): Project = Project(

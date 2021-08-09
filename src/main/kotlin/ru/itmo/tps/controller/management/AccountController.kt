@@ -5,17 +5,23 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement
 import org.springframework.web.bind.annotation.*
 import ru.itmo.tps.dto.management.Account
 import ru.itmo.tps.dto.management.AccountCreateRequest
-import ru.itmo.tps.entity.management.AccountEntity
+import ru.itmo.tps.dto.management.AccountLimits
 import ru.itmo.tps.service.management.AccountService
 import java.util.*
 
 @RestController
 @RequestMapping("management/accounts")
-class AccountController(val accountService: AccountService) {
+class AccountController(private val accountService: AccountService) {
     @GetMapping("{id}")
     @Operation(security = [SecurityRequirement(name = "management")])
     fun get(@PathVariable id: UUID): Account {
         return accountService.findById(id)
+    }
+
+    @GetMapping("{id}/accountLimits")
+    @Operation(security = [SecurityRequirement(name = "management")])
+    fun getAccountLimits(@PathVariable id: UUID): AccountLimits {
+        return accountService.findAccountLimitsById(id)
     }
 
     @PostMapping

@@ -1,12 +1,14 @@
 package ru.itmo.tps.service.management
 
+import org.springframework.cache.CacheManager
 import org.springframework.cache.annotation.CacheEvict
-import org.springframework.cache.annotation.CachePut
 import org.springframework.cache.annotation.Cacheable
 import org.springframework.cache.annotation.Caching
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
 import ru.itmo.tps.dto.management.Account
 import ru.itmo.tps.dto.management.AccountCreateRequest
+import ru.itmo.tps.dto.management.AccountLimits
 import ru.itmo.tps.entity.management.AccountEntity
 import ru.itmo.tps.entity.management.AnswerMethod
 import ru.itmo.tps.entity.toDto
@@ -20,15 +22,15 @@ import java.util.*
 class AccountService(
     private val repository: AccountRepository,
     private val projectService: ProjectService,
-    private val accountLimitsService: AccountLimitsService
+    private val accountLimitsService: AccountLimitsService,
+    private val cacheManager: CacheManager
 ) {
-    @Cacheable(value = ["accountCache"], key = "#id") // todo remove caching by id? is not used in transactions
     fun findById(id: UUID): Account = repository.findById(id).orElseThrow { EntityNotFoundException(id) }.toDto()
 
-    @Caching(
-        put = [CachePut(value = ["accountCache"], key = "#result.clientSecret")],
-        cacheable = [Cacheable(value = ["accountCache"], key = "#clientSecret")]
-    )
+    fun findAccountLimitsById(id: UUID): AccountLimits =
+        repository.findById(id).orElseThrow { EntityNotFoundException(id) }.accountLimits!!.toDto()
+
+    @Cacheable(value = ["accountCache"], key = "#clientSecret")
     fun findByClientSecret(clientSecret: UUID): Account = repository.findByClientSecret(clientSecret)
         .orElseThrow { EntityNotFoundException("Cannot find Account with client secret: $clientSecret") }
         .toDto()
@@ -36,7 +38,7 @@ class AccountService(
     fun create(createRequest: AccountCreateRequest): Account {
         val project = projectService.findById(createRequest.projectId)
 
-        var accountEntity = AccountEntity(
+        val accountEntity = AccountEntity(
             UUID.randomUUID(),
             createRequest.name,
             createRequest.answerMethod,
@@ -48,13 +50,11 @@ class AccountService(
 
         validateAndThrow(accountEntity)
 
-        accountEntity = repository.save(accountEntity)
-        return accountEntity.toDto()
+        return repository.save(accountEntity).toDto()
     }
 
     @Caching(
         evict = [
-            CacheEvict(value = ["accountCache"], key = "#id"),
             CacheEvict(value = ["accountCache"], key = "#result.clientSecret"),
             CacheEvict(value = ["projectCache"], key = "#result.projectId")
         ]
@@ -68,18 +68,26 @@ class AccountService(
         return repository.save(oldEntity).toDto()
     }
 
-    @Caching(
-        evict = [
-            CacheEvict(value = ["accountCache"], key = "#id"),
-            CacheEvict(value = ["accountCache"], key = "#result.clientSecret"),
-            CacheEvict(value = ["projectCache"], allEntries = true) // todo smarter project cache eviction
-        ]
-    )
-    fun deleteById(id: UUID) = repository.deleteById(id)
+    @Transactional
+    fun deleteById(id: UUID) {
+        val accountOptional = repository.findById(id)
+        if (accountOptional.isEmpty) return
+
+        val accountEntity = accountOptional.get()
+        cacheManager.getCache("accountCache")?.evict(accountEntity.clientSecret!!)
+        cacheManager.getCache("projectCache")?.evict(accountEntity.project!!.id!!)
+
+        accountEntity.project?.removeAccount(accountEntity)
+        repository.deleteById(accountEntity.id!!)
+    }
 
     private fun validateAndThrow(accountEntity: AccountEntity) {
         if (accountEntity.answerMethod == AnswerMethod.CALLBACK && accountEntity.callbackUrl.isNullOrEmpty()) {
             throw EntityNotValidException("Callback url must be provided with AnswerMethod=Callback")
+        }
+
+        if (accountEntity.accountLimits == null) {
+            throw EntityNotValidException("Account limits cannot be null")
         }
     }
 

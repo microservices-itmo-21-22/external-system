@@ -6,6 +6,7 @@ data class AccountLimits (
     val id: UUID,
 
     val acceptTransactions: Boolean,
+
     val enableResponseTimeVariation: Boolean,
     val responseTimeLowerBound: Long,
     val responseTimeUpperBound: Long,

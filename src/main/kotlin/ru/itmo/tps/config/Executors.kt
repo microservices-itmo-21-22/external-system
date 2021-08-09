@@ -4,6 +4,7 @@ import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import java.util.concurrent.LinkedBlockingQueue
+import java.util.concurrent.ScheduledThreadPoolExecutor
 import java.util.concurrent.ThreadPoolExecutor
 import java.util.concurrent.TimeUnit
 
@@ -30,6 +31,17 @@ class Executors {
             keepThreadsSeconds,
             TimeUnit.SECONDS,
             LinkedBlockingQueue(queueSize)
+        )
+    }
+
+    @Configuration
+    class PostponedTransactionHandling {
+        @Value("\${executors.postponed-transaction-handling.threads-max}")
+        var threadsMax: Int = 8
+
+        @Bean
+        fun postponedTransactionHandlingExecutor() = ScheduledThreadPoolExecutor(
+            threadsMax,
         )
     }
 }

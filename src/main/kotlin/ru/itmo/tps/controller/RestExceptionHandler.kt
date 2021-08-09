@@ -13,6 +13,7 @@ import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExcep
 import ru.itmo.tps.dto.ApiError
 import ru.itmo.tps.exception.EntityNotFoundException
 import ru.itmo.tps.exception.EntityNotValidException
+import ru.itmo.tps.exception.NotAuthenticatedException
 import java.time.Instant
 
 @ControllerAdvice
@@ -25,6 +26,11 @@ class RestExceptionHandler : ResponseEntityExceptionHandler() {
     @ExceptionHandler(value = [EntityNotValidException::class])
     fun handleEntityNotValid(exception: EntityNotValidException): ResponseEntity<Any> {
         return ResponseEntity(composeApiError(exception.message ?: "Bad request"), HttpStatus.BAD_REQUEST)
+    }
+
+    @ExceptionHandler(value = [NotAuthenticatedException::class])
+    fun handleNotAuthenticated(exception: NotAuthenticatedException): ResponseEntity<Any> {
+        return ResponseEntity(composeApiError(exception.message ?: "Not authenticated"), HttpStatus.UNAUTHORIZED)
     }
 
     override fun handleMethodArgumentNotValid(

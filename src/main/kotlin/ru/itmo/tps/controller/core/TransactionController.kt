@@ -1,5 +1,6 @@
 package ru.itmo.tps.controller.core
 
+import mu.KotlinLogging
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
@@ -16,12 +17,19 @@ class TransactionController(
     private val transactionHandler: TransactionHandler,
     private val transactionHandlingExecutor: ExecutorService
 ) {
+    private val logger = KotlinLogging.logger {}
+
     @PostMapping
-    fun submitTransaction(@RequestBody transactionRequest: TransactionRequest) : DeferredResult<Transaction> {
-        val deferredResult = DeferredResult<Transaction>(500L)
+    fun submitTransaction(@RequestBody transactionRequest: TransactionRequest): DeferredResult<Transaction> {
+        val deferredResult = DeferredResult<Transaction>()
 
         transactionHandlingExecutor.submit {
-            deferredResult.setResult(transactionHandler.submitTransaction(transactionRequest))
+            try {
+                deferredResult.setResult(transactionHandler.submitTransaction(transactionRequest))
+            } catch (ex: Exception) {
+                logger.debug { "Error submitting transaction $ex" }
+                deferredResult.setErrorResult(ex)
+            }
         }
 
         return deferredResult

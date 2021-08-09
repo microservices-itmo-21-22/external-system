@@ -10,7 +10,7 @@ import java.util.*
 
 @RestController
 @RequestMapping("management/projects")
-class ProjectController(val projectService: ProjectService) {
+class ProjectController(private val projectService: ProjectService) {
 
     @GetMapping("{id}")
     @Operation(security = [SecurityRequirement(name = "management")])

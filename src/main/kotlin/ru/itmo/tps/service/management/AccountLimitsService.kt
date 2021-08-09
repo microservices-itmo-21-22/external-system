@@ -1,8 +1,11 @@
 package ru.itmo.tps.service.management
 
+import org.springframework.cache.annotation.CacheEvict
 import org.springframework.cache.annotation.Cacheable
+import org.springframework.cache.annotation.Caching
 import org.springframework.stereotype.Service
 import ru.itmo.tps.dto.management.AccountLimits
+import ru.itmo.tps.dto.management.AccountLimitsCreateRequest
 import ru.itmo.tps.entity.management.AccountLimitsEntity
 import ru.itmo.tps.entity.toDto
 import ru.itmo.tps.entity.toEntity
@@ -14,11 +17,12 @@ import java.util.*
 @Service
 class AccountLimitsService(private val repository: AccountLimitsRepository) {
     @Cacheable(value = ["accountLimitsCache"], key = "#id")
-    fun findById(id: UUID): AccountLimits = repository.findById(id).orElseThrow { EntityNotFoundException(id) }.toDto()
+    fun findById(id: UUID): AccountLimits =
+        repository.findById(id).orElseThrow { EntityNotFoundException(id) }.toDto()
 
     fun createDefault(): AccountLimits = repository.save(
         AccountLimitsEntity(
-            id = null,
+            id = UUID.randomUUID(),
             acceptTransactions = true,
             enableResponseTimeVariation = false,
             responseTimeLowerBound = 0,
@@ -35,6 +39,34 @@ class AccountLimitsService(private val repository: AccountLimitsRepository) {
         )
     ).toDto()
 
+    fun create(accountLimitsCreateRequest: AccountLimitsCreateRequest): AccountLimits {
+        val accountLimitsEntity = AccountLimitsEntity(
+            UUID.randomUUID(),
+            acceptTransactions = accountLimitsCreateRequest.acceptTransactions,
+            enableResponseTimeVariation = accountLimitsCreateRequest.enableResponseTimeVariation,
+            responseTimeLowerBound = accountLimitsCreateRequest.responseTimeLowerBound ?: 0,
+            responseTimeUpperBound = accountLimitsCreateRequest.responseTimeUpperBound ?: 0,
+            enableFailures = accountLimitsCreateRequest.enableFailures,
+            failureProbability = accountLimitsCreateRequest.failureProbability ?: 0.0,
+            enableRateLimits = accountLimitsCreateRequest.enableRateLimits,
+            requestsPerSecond = accountLimitsCreateRequest.requestsPerSecond ?: 0,
+            requestsPerMinute = accountLimitsCreateRequest.requestsPerMinute ?: 0,
+            requestsPerHour = accountLimitsCreateRequest.requestsPerHour ?: 0,
+            requestsPerDay = accountLimitsCreateRequest.requestsPerDay ?: 0,
+            enableServerErrors = accountLimitsCreateRequest.enableServerErrors,
+            serverErrorProbability = accountLimitsCreateRequest.serverErrorProbability ?: 0.0
+        )
+
+        validateAndThrow(accountLimitsEntity)
+
+        return repository.save(accountLimitsEntity).toDto()
+    }
+
+    @Caching(
+        evict = [
+            CacheEvict(value = ["accountLimitsCache"], key = "#id")
+        ]
+    )
     fun update(id: UUID, newAccountLimits: AccountLimits): AccountLimits {
         val oldEntity = repository.findById(id).orElseThrow { EntityNotFoundException(id) }
         map(newAccountLimits.toEntity(), oldEntity)
@@ -42,6 +74,11 @@ class AccountLimitsService(private val repository: AccountLimitsRepository) {
         validateAndThrow(oldEntity)
 
         return repository.save(oldEntity).toDto()
+    }
+
+    @CacheEvict(value = ["accountLimitsCache"], key = "#id")
+    fun deleteById(id: UUID) {
+        repository.deleteById(id)
     }
 
     fun validateAndThrow(accountLimitsEntity: AccountLimitsEntity) {

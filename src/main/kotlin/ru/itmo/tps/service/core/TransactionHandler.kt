@@ -5,6 +5,9 @@ import org.springframework.stereotype.Service
 import ru.itmo.tps.dto.Transaction
 import ru.itmo.tps.dto.TransactionRequest
 import ru.itmo.tps.dto.TransactionStatus
+import ru.itmo.tps.dto.management.Account
+import ru.itmo.tps.exception.EntityNotFoundException
+import ru.itmo.tps.exception.NotAuthenticatedException
 import ru.itmo.tps.service.core.handlestrategy.TransactionHandlingStrategy
 import ru.itmo.tps.service.management.AccountService
 
@@ -15,10 +18,22 @@ class TransactionHandler(
     private val transactionHandlingStrategies: List<TransactionHandlingStrategy>
 ) {
     fun submitTransaction(transactionRequest: TransactionRequest): Transaction {
-        val account = accountService.findByClientSecret(transactionRequest.clientSecret)
+        val account: Account
+        try {
+            account = accountService.findByClientSecret(transactionRequest.clientSecret)
+        } catch (e: EntityNotFoundException) {
+            throw NotAuthenticatedException("Cannot find account with given client secret")
+        }
 
-        var transaction = Transaction(transactionRequest.transactionId, TransactionStatus.PENDING)
+        val transaction = Transaction(transactionRequest.transactionId, TransactionStatus.PENDING)
+
+        selectStrategy(account).handle(transaction, account.accountLimits)
 
         return transaction
+    }
+
+    private fun selectStrategy(account: Account): TransactionHandlingStrategy {
+        return transactionHandlingStrategies.find { it.supports(account) }
+            ?: throw Exception("Cannot find suitable handler")
     }
 }

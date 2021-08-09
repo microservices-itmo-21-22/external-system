@@ -19,11 +19,11 @@ class ProjectEntity(
     var accounts: MutableSet<AccountEntity> = mutableSetOf()
 ): BaseEntity(id) {
 
-    constructor(id: UUID?) : this(id, null, mutableSetOf())
-
-    fun addAccount(account: AccountEntity) {
-        accounts.add(account)
+    fun removeAccount(accountEntity: AccountEntity) {
+        accounts.remove(accountEntity)
     }
+
+    constructor(id: UUID?) : this(id, null, mutableSetOf())
 
     override fun toString(): String = "Project(id=$id, name=$name)"
 }
