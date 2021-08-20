@@ -14,6 +14,7 @@ import ru.itmo.tps.dto.ApiError
 import ru.itmo.tps.exception.EntityNotFoundException
 import ru.itmo.tps.exception.EntityNotValidException
 import ru.itmo.tps.exception.NotAuthenticatedException
+import ru.itmo.tps.exception.TransactionSubmittingFailureException
 import java.time.Instant
 
 @ControllerAdvice
@@ -31,6 +32,14 @@ class RestExceptionHandler : ResponseEntityExceptionHandler() {
     @ExceptionHandler(value = [NotAuthenticatedException::class])
     fun handleNotAuthenticated(exception: NotAuthenticatedException): ResponseEntity<Any> {
         return ResponseEntity(composeApiError(exception.message ?: "Not authenticated"), HttpStatus.UNAUTHORIZED)
+    }
+
+    @ExceptionHandler(value = [TransactionSubmittingFailureException::class])
+    fun handleEntityNotFound(exception: TransactionSubmittingFailureException): ResponseEntity<Any> {
+        return ResponseEntity(
+            composeApiError(exception.message ?: "Internal server error"),
+            HttpStatus.INTERNAL_SERVER_ERROR
+        )
     }
 
     override fun handleMethodArgumentNotValid(
