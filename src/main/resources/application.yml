@@ -7,3 +7,15 @@ spring:
     open-in-view: false
     hibernate:
       ddl-auto: validate
+  mvc:
+    async:
+      request-timeout: 600000 # 10 minutes
+
+logging:
+  level:
+    org:
+      springframework:
+        cache: TRACE
+
+auth:
+  token: strong
