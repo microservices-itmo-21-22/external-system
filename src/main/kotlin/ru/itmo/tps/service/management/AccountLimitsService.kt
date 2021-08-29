@@ -112,7 +112,10 @@ class AccountLimitsService(private val repository: AccountLimitsRepository) {
         }
 
         if (accountLimitsEntity.enableRateLimits == true) {
-            // TODO: 07.08.2021 add validation for rate limits
+            if (accountLimitsEntity.requestsPerSecond!! <= 0) {
+                errors += "Requests per seconds must be positive"
+            }
+            // todo maybe add another validation
         }
 
         if (accountLimitsEntity.enableServerErrors == true) {

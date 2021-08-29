@@ -35,7 +35,7 @@ class RestExceptionHandler : ResponseEntityExceptionHandler() {
     }
 
     @ExceptionHandler(value = [TransactionSubmittingFailureException::class])
-    fun handleEntityNotFound(exception: TransactionSubmittingFailureException): ResponseEntity<Any> {
+    fun handleTransactionSubmittingFailure(exception: TransactionSubmittingFailureException): ResponseEntity<Any> {
         return ResponseEntity(
             composeApiError(exception.message ?: "Internal server error"),
             HttpStatus.INTERNAL_SERVER_ERROR

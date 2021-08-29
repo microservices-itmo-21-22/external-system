@@ -2,6 +2,7 @@ package ru.itmo.tps.entity.management
 
 import lombok.Getter
 import lombok.Setter
+import ru.itmo.tps.entity.BaseEntity
 import java.util.*
 import javax.persistence.*
 
@@ -29,6 +30,7 @@ class AccountEntity(
     @JoinColumn(name = "account_limits_id")
     var accountLimits: AccountLimitsEntity?
 ) : BaseEntity(id) {
+    constructor(id: UUID?) : this(id, null, null, null, null, null, null)
 
     override fun toString(): String = "Account(id=$id, name=$name, answerMethod=$answerMethod)"
 }

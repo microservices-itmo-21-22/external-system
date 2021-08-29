@@ -2,7 +2,6 @@ package ru.itmo.tps.service.management
 
 import org.springframework.cache.annotation.CacheEvict
 import org.springframework.cache.annotation.Cacheable
-import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.stereotype.Service
 import ru.itmo.tps.dto.management.Project
 import ru.itmo.tps.dto.management.ProjectCreateRequest
@@ -10,10 +9,11 @@ import ru.itmo.tps.entity.management.ProjectEntity
 import ru.itmo.tps.entity.toDto
 import ru.itmo.tps.entity.toEntity
 import ru.itmo.tps.exception.EntityNotFoundException
+import ru.itmo.tps.repository.ProjectRepository
 import java.util.*
 
 @Service
-class ProjectService(private val repository: JpaRepository<ProjectEntity, UUID>) {
+class ProjectService(private val repository: ProjectRepository) {
     @Cacheable(value = ["projectCache"], key = "#id")
     fun findById(id: UUID): Project = repository.findById(id).orElseThrow { EntityNotFoundException(id) }.toDto()
 

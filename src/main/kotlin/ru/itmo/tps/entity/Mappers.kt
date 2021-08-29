@@ -1,8 +1,10 @@
 package ru.itmo.tps.entity
 
+import ru.itmo.tps.dto.Transaction
 import ru.itmo.tps.dto.management.Account
 import ru.itmo.tps.dto.management.AccountLimits
 import ru.itmo.tps.dto.management.Project
+import ru.itmo.tps.entity.core.TransactionEntity
 import ru.itmo.tps.entity.management.AccountEntity
 import ru.itmo.tps.entity.management.AccountLimitsEntity
 import ru.itmo.tps.entity.management.ProjectEntity
@@ -37,6 +39,22 @@ fun Project.toEntity(): ProjectEntity = ProjectEntity(
     id = this.id,
     name = this.name,
     accounts = this.accounts.map { it.toEntity() }.toMutableSet()
+)
+
+fun Transaction.toEntity(): TransactionEntity = TransactionEntity(
+    id = this.id,
+    submitTime = this.submitTime,
+    completedTime = this.completedTime,
+    status = this.status,
+    account = AccountEntity(this.accountId)
+)
+
+fun TransactionEntity.toDto(): Transaction = Transaction(
+    id = this.id!!,
+    submitTime = this.submitTime!!,
+    completedTime = this.completedTime,
+    status = this.status!!,
+    accountId = this.account?.id!!
 )
 
 fun AccountLimitsEntity.toDto(): AccountLimits = AccountLimits(
