@@ -24,8 +24,8 @@ class ServerErrorsLimitHandler private constructor(
         val random = Random.nextDouble(0.0, 100.0)
 
         if (random < serverErrorProbability) {
-            throw TransactionSubmittingFailureException("Unable to submit transaction with id=${transaction.id}")
-        }
+            throw TransactionSubmittingFailureException("Unable to submit transaction with id=${transaction.id}") // todo sukhoa will it be looger in history?
+        } // todo sukhoa or this is like submission error?
 
         return transaction
     }

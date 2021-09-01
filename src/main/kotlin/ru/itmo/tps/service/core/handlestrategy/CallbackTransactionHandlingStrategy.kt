@@ -33,15 +33,15 @@ class CallbackTransactionHandlingStrategy(
 
         CoroutineScope(nonblockingTransactionDispatcher).launch {
             val handledTransaction = limitHandlerChainBuilder.build().handle(transaction).complete()
-            transactionService.save(handledTransaction)
+            transactionService.save(handledTransaction) // todo sukhoa still better use different pool
             kotlin.runCatching {
-                RestTemplate().postForLocation(
+                RestTemplate().postForLocation( // todo sukhoa it should be done in non-blocking way. get the future and suspend coroutine
                     account.callbackUrl!!, // TODO: 29.08.2021 :)
-                    handledTransaction
+                    handledTransaction // todo sukhoa configure timeout
                 )
             }.onFailure { logger.warn { "Cannot reach callback server" } }
         }
 
-        return transaction
+        return transaction // todo sukhoa thi si not like fair transaction but rater submission
     }
 }

@@ -19,7 +19,7 @@ class TransactionController(
 
     @PostMapping
     fun submitTransactionAsync(@RequestBody transactionRequest: TransactionRequest) =
-        CoroutineScope(transactionDispatcher).async {
+        CoroutineScope(transactionDispatcher).async { // todo sukhoa exception handler
             transactionHandler.submitTransaction(transactionRequest)
         }
 

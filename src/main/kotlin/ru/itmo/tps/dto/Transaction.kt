@@ -15,7 +15,7 @@ data class Transaction(
     val delta: Long
         get() = completedTime?.minus(submitTime) ?: 0
 
-    fun complete() = Transaction(
+    fun complete() = Transaction( // todo sukhoa you can do the same by using copy method
         id = this.id,
         submitTime = this.submitTime,
         completedTime = Instant.now().toEpochMilli(),

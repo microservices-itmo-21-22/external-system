@@ -30,7 +30,7 @@ class PollingTransactionHandlingStrategy(
 
         CoroutineScope(nonblockingTransactionDispatcher).launch {
             val handledTransaction = limitHandlerChainBuilder.build().handle(transaction).complete()
-            transactionService.save(handledTransaction)
+            transactionService.save(handledTransaction) // todo sukhoa shouldn't we separate storages for transaction details and for history?
         }
 
         return transaction

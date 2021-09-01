@@ -42,7 +42,8 @@ class TransactionHandler(
 
         transaction = selectStrategy(account).handle(transaction, account)
 
-        CoroutineScope(databaseDispatcher).launch {
+        // todo sukhoa don't we want to make it sync?
+        CoroutineScope(databaseDispatcher).launch { // todo sukhoa encapsulate it in transaction service and add exception handler
             transactionService.save(transaction)
         }
 

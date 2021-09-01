@@ -24,7 +24,7 @@ class ResponseTimeVariationLimitHandler private constructor(
     override suspend fun handle(transaction: Transaction): Transaction {
         val sleepMillis = nextLong(minResponseTime, maxResponseTime)
 
-        delay(sleepMillis)
+        delay(sleepMillis) // todo sukhoa shouldn't we add this details to transaction? in order to make it easier to investigate different situations
 
         return transaction
     }

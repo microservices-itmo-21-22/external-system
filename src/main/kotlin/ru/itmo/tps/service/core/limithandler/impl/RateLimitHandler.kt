@@ -16,7 +16,7 @@ class RateLimitHandler private constructor(
     }
 
     override suspend fun handle(transaction: Transaction): Transaction {
-        println("RateLimitHandler invoked. RPS: $requestsPerSecond")
+        println("RateLimitHandler invoked. RPS: $requestsPerSecond") // todo sukhoa logger
 
         return transaction
     }
