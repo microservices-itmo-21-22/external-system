@@ -14,7 +14,7 @@
     <name>tps</name>
     <description>TPS app</description>
     <properties>
-        <java.version>16</java.version>
+        <java.version>11</java.version>
         <kotlin.version>1.5.20</kotlin.version>
         <openapi.version>1.5.10</openapi.version>
         <kotlin.logging.version>1.12.5</kotlin.logging.version>
