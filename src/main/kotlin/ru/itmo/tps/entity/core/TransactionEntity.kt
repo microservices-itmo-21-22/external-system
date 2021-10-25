@@ -24,5 +24,7 @@ class TransactionEntity(
 
     @OneToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "account_id")
-    var account: AccountEntity?
+    var account: AccountEntity?,
+
+    var cost: Long?
 ) : BaseEntity(id)

@@ -1,8 +1,5 @@
 package ru.itmo.tps.service.core
 
-import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.launch
 import lombok.RequiredArgsConstructor
 import org.springframework.stereotype.Service
 import ru.itmo.tps.dto.Transaction
@@ -13,18 +10,14 @@ import ru.itmo.tps.exception.EntityNotFoundException
 import ru.itmo.tps.exception.NotAuthenticatedException
 import ru.itmo.tps.service.core.handlestrategy.TransactionHandlingStrategy
 import ru.itmo.tps.service.management.AccountService
-import ru.itmo.tps.service.management.TransactionService
 import java.util.*
 
 @Service
 @RequiredArgsConstructor
 class TransactionHandler(
     private val accountService: AccountService,
-    private val transactionHandlingStrategies: List<TransactionHandlingStrategy>,
-    private val transactionService: TransactionService,
-    private val databaseDispatcher: CoroutineDispatcher
+    private val transactionHandlingStrategies: List<TransactionHandlingStrategy>
 ) {
-
     suspend fun submitTransaction(transactionRequest: TransactionRequest): Transaction {
         val account: Account
         try {
@@ -41,11 +34,6 @@ class TransactionHandler(
         )
 
         transaction = selectStrategy(account).handle(transaction, account)
-
-        // todo sukhoa don't we want to make it sync?
-        CoroutineScope(databaseDispatcher).launch { // todo sukhoa encapsulate it in transaction service and add exception handler
-            transactionService.save(transaction)
-        }
 
         return transaction
     }

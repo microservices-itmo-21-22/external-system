@@ -6,4 +6,6 @@ import java.util.*
 
 interface AccountRepository : JpaRepository<AccountEntity, UUID> {
     fun findByClientSecret(clientSecret: UUID): Optional<AccountEntity>
+
+    fun findByAccountLimitsId(accountLimitsId: UUID): Optional<AccountEntity>
 }

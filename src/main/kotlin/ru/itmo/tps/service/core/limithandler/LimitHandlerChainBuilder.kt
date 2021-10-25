@@ -1,7 +1,6 @@
 package ru.itmo.tps.service.core.limithandler
 
 import ru.itmo.tps.dto.management.AccountLimits
-import ru.itmo.tps.service.core.limithandler.impl.RateLimitHandler
 import ru.itmo.tps.service.core.limithandler.impl.ResponseTimeVariationLimitHandler
 import ru.itmo.tps.service.core.limithandler.impl.ServerErrorsLimitHandler
 import ru.itmo.tps.service.core.limithandler.impl.TransactionFailureLimitHandler
@@ -21,11 +20,6 @@ class LimitHandlerChainBuilder(val accountLimits: AccountLimits) {
 
     fun enableServerErrors(): LimitHandlerChainBuilder {
         handlers.add(ServerErrorsLimitHandler.create(accountLimits))
-        return this
-    }
-
-    fun enableRateLimiter(): LimitHandlerChainBuilder {
-        handlers.add(RateLimitHandler.create(accountLimits))
         return this
     }
 

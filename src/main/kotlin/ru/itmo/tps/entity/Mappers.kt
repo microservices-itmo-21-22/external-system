@@ -16,7 +16,8 @@ fun Account.toEntity(): AccountEntity = AccountEntity(
     clientSecret = this.clientSecret,
     callbackUrl = this.callbackUrl,
     project = ProjectEntity(this.projectId),
-    accountLimits = this.accountLimits.toEntity()
+    accountLimits = this.accountLimits.toEntity(),
+    transactionCost = this.transactionCost
 )
 
 fun AccountEntity.toDto(): Account = Account(
@@ -26,7 +27,8 @@ fun AccountEntity.toDto(): Account = Account(
     callbackUrl = this.callbackUrl ?: "",
     clientSecret = this.clientSecret!!,
     projectId = this.project?.id!!,
-    accountLimits = this.accountLimits!!.toDto()
+    accountLimits = this.accountLimits!!.toDto(),
+    transactionCost = this.transactionCost!!
 )
 
 fun ProjectEntity.toDto(): Project = Project(
@@ -46,7 +48,8 @@ fun Transaction.toEntity(): TransactionEntity = TransactionEntity(
     submitTime = this.submitTime,
     completedTime = this.completedTime,
     status = this.status,
-    account = AccountEntity(this.accountId)
+    account = AccountEntity(this.accountId),
+    cost = this.cost
 )
 
 fun TransactionEntity.toDto(): Transaction = Transaction(
@@ -54,7 +57,8 @@ fun TransactionEntity.toDto(): Transaction = Transaction(
     submitTime = this.submitTime!!,
     completedTime = this.completedTime,
     status = this.status!!,
-    accountId = this.account?.id!!
+    accountId = this.account?.id!!,
+    cost = this.cost
 )
 
 fun AccountLimitsEntity.toDto(): AccountLimits = AccountLimits(
@@ -66,10 +70,8 @@ fun AccountLimitsEntity.toDto(): AccountLimits = AccountLimits(
     enableFailures = this.enableFailures!!,
     failureProbability = this.failureProbability!!,
     enableRateLimits = this.enableRateLimits!!,
-    requestsPerSecond = this.requestsPerSecond!!,
     requestsPerMinute = this.requestsPerMinute!!,
-    requestsPerHour = this.requestsPerHour!!,
-    requestsPerDay = this.requestsPerDay!!,
+    parallelRequests = this.parallelRequests!!,
     enableServerErrors = this.enableServerErrors!!,
     serverErrorProbability = this.serverErrorProbability!!
 )
@@ -83,10 +85,8 @@ fun AccountLimits.toEntity(): AccountLimitsEntity = AccountLimitsEntity(
     enableFailures = this.enableFailures,
     failureProbability = this.failureProbability,
     enableRateLimits = this.enableRateLimits,
-    requestsPerSecond = this.requestsPerSecond,
     requestsPerMinute = this.requestsPerMinute,
-    requestsPerHour = this.requestsPerHour,
-    requestsPerDay = this.requestsPerDay,
+    parallelRequests = this.parallelRequests,
     enableServerErrors = this.enableServerErrors,
     serverErrorProbability = this.serverErrorProbability
 )

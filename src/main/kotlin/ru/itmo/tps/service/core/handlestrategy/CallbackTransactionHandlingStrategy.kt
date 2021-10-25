@@ -4,44 +4,67 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import mu.KotlinLogging
+import org.springframework.http.ResponseEntity
 import org.springframework.stereotype.Service
-import org.springframework.web.client.RestTemplate
+import org.springframework.web.reactive.function.client.WebClient
+import reactor.core.publisher.Mono
+import ru.itmo.tps.config.WebClientConfig.Companion.RETRY_COUNT
+import ru.itmo.tps.config.coroutineExceptionHandler
 import ru.itmo.tps.dto.Transaction
 import ru.itmo.tps.dto.management.Account
 import ru.itmo.tps.entity.management.AnswerMethod
 import ru.itmo.tps.service.core.limithandler.LimitHandlerChainBuilder
 import ru.itmo.tps.service.core.limithandler.impl.ServerErrorsLimitHandler
+import ru.itmo.tps.service.core.ratelimits.RateLimitsService
 import ru.itmo.tps.service.management.TransactionService
 
 @Service
-class CallbackTransactionHandlingStrategy(
-    private val nonblockingTransactionDispatcher: CoroutineDispatcher,
-    private val transactionService: TransactionService
+class CallbackTransactionHandlingStrategy(private val nonblockingTransactionDispatcher: CoroutineDispatcher,
+    private val transactionService: TransactionService,
+    private val webClient: WebClient,
+    private val rateLimitsService: RateLimitsService
 ) : TransactionHandlingStrategy {
     private val logger = KotlinLogging.logger {}
 
     override fun supports(account: Account) = AnswerMethod.CALLBACK == account.answerMethod
 
     override suspend fun handle(transaction: Transaction, account: Account): Transaction {
-        val limitHandlerChainBuilder = LimitHandlerChainBuilder(account.accountLimits)
-
-        limitHandlerChainBuilder.enableResponseTimeVariation()
-        limitHandlerChainBuilder.enableTransactionFailure()
-        limitHandlerChainBuilder.enableRateLimiter()
-
+        rateLimitsService.acquire(account)
         ServerErrorsLimitHandler.create(account.accountLimits).handle(transaction)
 
-        CoroutineScope(nonblockingTransactionDispatcher).launch {
-            val handledTransaction = limitHandlerChainBuilder.build().handle(transaction).complete()
-            transactionService.save(handledTransaction) // todo sukhoa still better use different pool
-            kotlin.runCatching {
-                RestTemplate().postForLocation( // todo sukhoa it should be done in non-blocking way. get the future and suspend coroutine
-                    account.callbackUrl!!, // TODO: 29.08.2021 :)
-                    handledTransaction // todo sukhoa configure timeout
-                )
-            }.onFailure { logger.warn { "Cannot reach callback server" } }
+        val limitHandlerChainBuilder = LimitHandlerChainBuilder(account.accountLimits)
+        limitHandlerChainBuilder.enableResponseTimeVariation()
+        limitHandlerChainBuilder.enableTransactionFailure()
+
+        CoroutineScope(nonblockingTransactionDispatcher).launch(coroutineExceptionHandler) {
+            val handledTransaction = limitHandlerChainBuilder.build()
+                .handle(transaction)
+                .complete(account.transactionCost)
+
+            transactionService.save(handledTransaction)
+            doCallback(account.callbackUrl!!, handledTransaction)
+            rateLimitsService.release(account)
         }
 
-        return transaction // todo sukhoa thi si not like fair transaction but rater submission
+        return transaction
+    }
+
+    suspend fun doCallback(callbackUrl: String, transaction: Transaction) {
+        val callbackMono = webClient
+            .post()
+            .uri(callbackUrl).bodyValue(transaction)
+            .exchangeToMono { response ->
+                if (!response.statusCode().isError) {
+                    response.toBodilessEntity()
+                } else {
+                    response.createException().flatMap {
+                        logger.error { "Error during callback request $it" }
+                        Mono.error<ResponseEntity<Void>>(it)
+                    }
+                }
+            }
+            .retry(RETRY_COUNT)
+
+        callbackMono.subscribe()
     }
 }

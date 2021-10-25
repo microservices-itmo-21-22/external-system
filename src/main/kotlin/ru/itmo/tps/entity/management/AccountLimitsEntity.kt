@@ -29,13 +29,9 @@ class AccountLimitsEntity(
 
     var enableRateLimits: Boolean?,
 
-    var requestsPerSecond: Long?,
-
     var requestsPerMinute: Long?,
 
-    var requestsPerHour: Long?,
-
-    var requestsPerDay: Long?,
+    var parallelRequests: Long?,
 
     var enableServerErrors: Boolean?,
 
@@ -43,8 +39,6 @@ class AccountLimitsEntity(
 ) {
     constructor(id: UUID?) : this(
         id,
-        null,
-        null,
         null,
         null,
         null,

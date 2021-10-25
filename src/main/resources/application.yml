@@ -10,12 +10,17 @@ spring:
   mvc:
     async:
       request-timeout: 600000 # 10 minutes
+  application:
+    name: tps
 
 logging:
   level:
     org:
       springframework:
         cache: TRACE
+
+logstash:
+  url: logstash:4560
 
 auth:
   token: strong

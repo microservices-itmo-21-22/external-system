@@ -28,9 +28,11 @@ class AccountEntity(
 
     @OneToOne(fetch = FetchType.EAGER, cascade = [CascadeType.PERSIST])
     @JoinColumn(name = "account_limits_id")
-    var accountLimits: AccountLimitsEntity?
+    var accountLimits: AccountLimitsEntity?,
+
+    var transactionCost: Long?
 ) : BaseEntity(id) {
-    constructor(id: UUID?) : this(id, null, null, null, null, null, null)
+    constructor(id: UUID?) : this(id, null, null, null, null, null, null, null)
 
     override fun toString(): String = "Account(id=$id, name=$name, answerMethod=$answerMethod)"
 }

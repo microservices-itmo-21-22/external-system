@@ -10,16 +10,15 @@ data class Transaction(
     @JsonIgnore
     val accountId: UUID,
     val submitTime: Long = Instant.now().toEpochMilli(),
-    val completedTime: Long? = null
+    val completedTime: Long? = null,
+    val cost: Long? = null
 ) {
     val delta: Long
         get() = completedTime?.minus(submitTime) ?: 0
 
-    fun complete() = Transaction( // todo sukhoa you can do the same by using copy method
-        id = this.id,
-        submitTime = this.submitTime,
+    fun complete(cost: Long) = copy(
         completedTime = Instant.now().toEpochMilli(),
         status = if (this.status == TransactionStatus.PENDING) TransactionStatus.SUCCESS else this.status,
-        accountId = this.accountId
+        cost = cost,
     )
 }

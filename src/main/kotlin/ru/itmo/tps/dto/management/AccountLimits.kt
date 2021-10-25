@@ -15,10 +15,8 @@ data class AccountLimits (
     val failureProbability: Double,
 
     val enableRateLimits: Boolean,
-    val requestsPerSecond: Long,
     val requestsPerMinute: Long,
-    val requestsPerHour: Long,
-    val requestsPerDay: Long,
+    val parallelRequests: Long,
 
     val enableServerErrors: Boolean,
     val serverErrorProbability: Double

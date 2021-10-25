@@ -1,8 +1,10 @@
 package ru.itmo.tps.service.core.limithandler.impl
 
+import com.itmo.microservices.commonlib.logging.EventLogger
 import mu.KotlinLogging
 import ru.itmo.tps.dto.Transaction
 import ru.itmo.tps.dto.management.AccountLimits
+import ru.itmo.tps.event.NotableEvents
 import ru.itmo.tps.exception.TransactionSubmittingFailureException
 import ru.itmo.tps.service.core.limithandler.LimitHandler
 import kotlin.random.Random
@@ -10,7 +12,8 @@ import kotlin.random.Random
 class ServerErrorsLimitHandler private constructor(
     private val serverErrorProbability: Double,
 ) : LimitHandler {
-    private val logger = KotlinLogging.logger{}
+    private val logger = KotlinLogging.logger {}
+    private lateinit var eventLogger: EventLogger
 
     companion object {
         fun create(accountLimits: AccountLimits): LimitHandler {
@@ -24,8 +27,11 @@ class ServerErrorsLimitHandler private constructor(
         val random = Random.nextDouble(0.0, 100.0)
 
         if (random < serverErrorProbability) {
-            throw TransactionSubmittingFailureException("Unable to submit transaction with id=${transaction.id}") // todo sukhoa will it be looger in history?
-        } // todo sukhoa or this is like submission error?
+            eventLogger.error(NotableEvents.E_TRANSACTION_SUBMISSION_ERROR, transaction.id)
+            throw TransactionSubmittingFailureException(
+                NotableEvents.E_TRANSACTION_SUBMISSION_ERROR.getTemplate().format(transaction.id)
+            )
+        }
 
         return transaction
     }

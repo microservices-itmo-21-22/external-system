@@ -12,12 +12,26 @@
     <artifactId>tps</artifactId>
     <version>0.0.1-SNAPSHOT</version>
     <name>tps</name>
-    <description>Demo project for Spring Boot</description>
+    <description>TPS app</description>
     <properties>
         <java.version>16</java.version>
         <kotlin.version>1.5.20</kotlin.version>
+        <openapi.version>1.5.10</openapi.version>
+        <kotlin.logging.version>1.12.5</kotlin.logging.version>
+        <kotlin.coroutines.version>1.5.1</kotlin.coroutines.version>
+        <common-lib.version>0.5.0-SNAPSHOT</common-lib.version>
+        <logstash.encoder.version>6.6</logstash.encoder.version>
+
+        <buildnumber-maven-plugin.version>1.4</buildnumber-maven-plugin.version>
+        <jib-maven-plugin.version>2.8.0</jib-maven-plugin.version>
     </properties>
     <dependencies>
+        <dependency>
+            <groupId>com.itmo.microservices</groupId>
+            <artifactId>common-lib</artifactId>
+            <version>${common-lib.version}</version>
+        </dependency>
+
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-data-jpa</artifactId>
@@ -54,7 +68,7 @@
         <dependency>
             <groupId>org.springdoc</groupId>
             <artifactId>springdoc-openapi-ui</artifactId>
-            <version>1.5.10</version>
+            <version>${openapi.version}</version>
         </dependency>
 
         <dependency>
@@ -75,19 +89,54 @@
         <dependency>
             <groupId>io.github.microutils</groupId>
             <artifactId>kotlin-logging</artifactId>
-            <version>1.12.5</version>
+            <version>${kotlin.logging.version}</version>
         </dependency>
         <dependency>
             <groupId>org.jetbrains.kotlinx</groupId>
             <artifactId>kotlinx-coroutines-core</artifactId>
-            <version>1.5.1</version>
+            <version>${kotlin.coroutines.version}</version>
         </dependency>
         <dependency>
             <groupId>org.jetbrains.kotlinx</groupId>
             <artifactId>kotlinx-coroutines-reactor</artifactId>
-            <version>1.5.1</version>
+            <version>${kotlin.coroutines.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-webflux</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>net.logstash.logback</groupId>
+            <artifactId>logstash-logback-encoder</artifactId>
+            <version>${logstash.encoder.version}</version>
         </dependency>
     </dependencies>
+
+    <distributionManagement>
+        <snapshotRepository>
+            <id>snapshots</id>
+            <url>http://artifactory:8081/artifactory/libs-snapshot-local</url>
+        </snapshotRepository>
+    </distributionManagement>
+
+    <repositories>
+        <repository>
+            <id>central</id>
+            <url>https://repo1.maven.org/maven2/</url>
+        </repository>
+        <repository>
+            <id>itmo-central</id>
+            <url>http://77.234.215.138:30031/artifactory/libs-release</url>
+        </repository>
+        <repository>
+            <id>itmo-snapshots</id>
+            <url>http://77.234.215.138:30031/artifactory/libs-snapshot</url>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
+        </repository>
+    </repositories>
 
     <build>
         <sourceDirectory>${project.basedir}/src/main/kotlin</sourceDirectory>
@@ -129,6 +178,45 @@
                         <version>${kotlin.version}</version>
                     </dependency>
                 </dependencies>
+            </plugin>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>buildnumber-maven-plugin</artifactId>
+                <version>${buildnumber-maven-plugin.version}</version>
+                <executions>
+                    <execution>
+                        <phase>validate</phase>
+                        <goals>
+                            <goal>create</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <doCheck>false</doCheck>
+                    <doUpdate>false</doUpdate>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>com.google.cloud.tools</groupId>
+                <artifactId>jib-maven-plugin</artifactId>
+                <version>${jib-maven-plugin.version}</version>
+                <configuration>
+                    <to>
+                        <image>${env.DOCKER_REPO_HOST_INTERNAL}/${project.artifactId}</image>
+                        <tags>${scmBranch}_${project.version}</tags>
+                    </to>
+                    <allowInsecureRegistries>true</allowInsecureRegistries>
+
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>build and push image</id>
+                        <phase>deploy</phase>
+                        <goals>
+                            <goal>build</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>

@@ -10,5 +10,6 @@ data class Account (
     val projectId: UUID,
     val callbackUrl: String?,
     val clientSecret: UUID,
-    val accountLimits: AccountLimits
+    val accountLimits: AccountLimits,
+    val transactionCost: Long
 )

@@ -9,28 +9,34 @@ import ru.itmo.tps.dto.management.Account
 import ru.itmo.tps.entity.management.AnswerMethod
 import ru.itmo.tps.service.core.limithandler.LimitHandlerChainBuilder
 import ru.itmo.tps.service.core.limithandler.impl.ServerErrorsLimitHandler
+import ru.itmo.tps.service.core.ratelimits.RateLimitsService
 import ru.itmo.tps.service.management.TransactionService
 
 @Service
 class PollingTransactionHandlingStrategy(
     private val nonblockingTransactionDispatcher: CoroutineDispatcher,
-    private val transactionService: TransactionService
+    private val transactionService: TransactionService,
+    private val rateLimitsService: RateLimitsService
 ) : TransactionHandlingStrategy {
 
     override fun supports(account: Account) = AnswerMethod.POLLING == account.answerMethod
 
     override suspend fun handle(transaction: Transaction, account: Account): Transaction {
+        rateLimitsService.acquire(account)
         val limitHandlerChainBuilder = LimitHandlerChainBuilder(account.accountLimits)
 
         limitHandlerChainBuilder.enableResponseTimeVariation()
         limitHandlerChainBuilder.enableTransactionFailure()
-        limitHandlerChainBuilder.enableRateLimiter()
 
         ServerErrorsLimitHandler.create(account.accountLimits).handle(transaction)
 
         CoroutineScope(nonblockingTransactionDispatcher).launch {
-            val handledTransaction = limitHandlerChainBuilder.build().handle(transaction).complete()
-            transactionService.save(handledTransaction) // todo sukhoa shouldn't we separate storages for transaction details and for history?
+            val handledTransaction = limitHandlerChainBuilder.build()
+                .handle(transaction)
+                .complete(account.transactionCost)
+
+            transactionService.save(handledTransaction)
+            rateLimitsService.release(account)
         }
 
         return transaction
