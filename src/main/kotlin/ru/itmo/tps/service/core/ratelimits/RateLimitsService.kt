@@ -21,6 +21,10 @@ class RateLimitsService(private val rateLimitsWorkerDispatcher: CoroutineDispatc
     }
 
     fun acquire(account: Account) {
+        if (!account.accountLimits.enableRateLimits) {
+            return
+        }
+
         val rateLimiter = getRateLimiterOrCreate(account)
         val ongoingWindow = getOngoingWindowOrCreate(account)
 
@@ -35,6 +39,10 @@ class RateLimitsService(private val rateLimitsWorkerDispatcher: CoroutineDispatc
     }
 
     fun release(account: Account) {
+        if (!account.accountLimits.enableRateLimits) {
+            return
+        }
+
         getOngoingWindowOrCreate(account).releaseWindow()
     }
 
