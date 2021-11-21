@@ -19,6 +19,8 @@ class RateLimiter(
     private val releaseJob = rateLimiterScope.launch {
         while(true) {
             val permitsToRelease = rate - semaphore.availablePermits
+            if (permitsToRelease == 0) continue
+
             repeat(permitsToRelease) {
                 kotlin.runCatching {
                     semaphore.release()

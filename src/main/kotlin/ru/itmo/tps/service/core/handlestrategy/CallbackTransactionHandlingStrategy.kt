@@ -13,6 +13,7 @@ import ru.itmo.tps.config.coroutineExceptionHandler
 import ru.itmo.tps.dto.Transaction
 import ru.itmo.tps.dto.management.Account
 import ru.itmo.tps.entity.management.AnswerMethod
+import ru.itmo.tps.exception.TransactionSubmittingFailureException
 import ru.itmo.tps.service.core.limithandler.LimitHandlerChainBuilder
 import ru.itmo.tps.service.core.limithandler.impl.ServerErrorsLimitHandler
 import ru.itmo.tps.service.core.ratelimits.RateLimitsService
@@ -30,7 +31,12 @@ class CallbackTransactionHandlingStrategy(private val nonblockingTransactionDisp
 
     override suspend fun handle(transaction: Transaction, account: Account): Transaction {
         rateLimitsService.acquire(account)
-        ServerErrorsLimitHandler.create(account.accountLimits).handle(transaction)
+        try {
+            ServerErrorsLimitHandler.create(account.accountLimits).handle(transaction)
+        } catch (e: TransactionSubmittingFailureException) {
+            rateLimitsService.release(account)
+            throw e
+        }
 
         val limitHandlerChainBuilder = LimitHandlerChainBuilder(account.accountLimits)
         limitHandlerChainBuilder.enableResponseTimeVariation()

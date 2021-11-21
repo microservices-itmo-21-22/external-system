@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service
 import ru.itmo.tps.dto.Transaction
 import ru.itmo.tps.dto.management.Account
 import ru.itmo.tps.entity.management.AnswerMethod
+import ru.itmo.tps.exception.TransactionSubmittingFailureException
 import ru.itmo.tps.service.core.limithandler.LimitHandlerChainBuilder
 import ru.itmo.tps.service.core.limithandler.impl.ServerErrorsLimitHandler
 import ru.itmo.tps.service.core.ratelimits.RateLimitsService
@@ -28,7 +29,12 @@ class PollingTransactionHandlingStrategy(
         limitHandlerChainBuilder.enableResponseTimeVariation()
         limitHandlerChainBuilder.enableTransactionFailure()
 
-        ServerErrorsLimitHandler.create(account.accountLimits).handle(transaction)
+        try {
+            ServerErrorsLimitHandler.create(account.accountLimits).handle(transaction)
+        } catch (e: TransactionSubmittingFailureException) {
+            rateLimitsService.release(account)
+            throw e
+        }
 
         CoroutineScope(nonblockingTransactionDispatcher).launch {
             val handledTransaction = limitHandlerChainBuilder.build()

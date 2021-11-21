@@ -1,5 +1,6 @@
 package ru.itmo.tps.service.core.limithandler.impl
 
+import com.itmo.microservices.commonlib.annotations.InjectEventLogger
 import com.itmo.microservices.commonlib.logging.EventLogger
 import mu.KotlinLogging
 import ru.itmo.tps.dto.Transaction
@@ -13,6 +14,7 @@ class ServerErrorsLimitHandler private constructor(
     private val serverErrorProbability: Double,
 ) : LimitHandler {
     private val logger = KotlinLogging.logger {}
+    @InjectEventLogger
     private lateinit var eventLogger: EventLogger
 
     companion object {
@@ -27,7 +29,7 @@ class ServerErrorsLimitHandler private constructor(
         val random = Random.nextDouble(0.0, 100.0)
 
         if (random < serverErrorProbability) {
-            eventLogger.error(NotableEvents.E_TRANSACTION_SUBMISSION_ERROR, transaction.id)
+            //eventLogger.error(NotableEvents.E_TRANSACTION_SUBMISSION_ERROR, transaction.id)
             throw TransactionSubmittingFailureException(
                 NotableEvents.E_TRANSACTION_SUBMISSION_ERROR.getTemplate().format(transaction.id)
             )

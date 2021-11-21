@@ -18,21 +18,23 @@ class BlockingTransactionHandlingStrategy(private val transactionService: Transa
     override fun supports(account: Account) = account.answerMethod == AnswerMethod.TRANSACTION
 
     override suspend fun handle(transaction: Transaction, account: Account): Transaction {
-        rateLimitsService.acquire(account)
+        try {
+            rateLimitsService.acquire(account)
 
-        val limitHandlerChainBuilder = LimitHandlerChainBuilder(account.accountLimits)
+            val limitHandlerChainBuilder = LimitHandlerChainBuilder(account.accountLimits)
 
-        limitHandlerChainBuilder.enableServerErrors()
-        limitHandlerChainBuilder.enableResponseTimeVariation()
-        limitHandlerChainBuilder.enableTransactionFailure()
+            limitHandlerChainBuilder.enableServerErrors()
+            limitHandlerChainBuilder.enableResponseTimeVariation()
+            limitHandlerChainBuilder.enableTransactionFailure()
 
-        val handlerChain = limitHandlerChainBuilder.build()
-        val completedTransaction = handlerChain.handle(transaction).complete(account.transactionCost)
+            val handlerChain = limitHandlerChainBuilder.build()
+            val completedTransaction = handlerChain.handle(transaction).complete(account.transactionCost)
 
-        transactionService.save(completedTransaction)
+            transactionService.save(completedTransaction)
 
-        rateLimitsService.release(account)
-
-        return completedTransaction
+            return completedTransaction
+        } finally {
+            rateLimitsService.release(account)
+        }
     }
 }
