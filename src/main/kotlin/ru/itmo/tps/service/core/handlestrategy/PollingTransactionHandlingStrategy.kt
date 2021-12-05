@@ -35,13 +35,14 @@ class PollingTransactionHandlingStrategy(
             rateLimitsService.release(account)
             throw e
         }
+        transactionService.cachePending(transaction)
 
         CoroutineScope(nonblockingTransactionDispatcher).launch {
             val handledTransaction = limitHandlerChainBuilder.build()
                 .handle(transaction)
                 .complete(account.transactionCost)
 
-            transactionService.save(handledTransaction)
+            transactionService.saveAndEvict(handledTransaction)
             rateLimitsService.release(account)
         }
 
