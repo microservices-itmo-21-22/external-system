@@ -27,6 +27,8 @@ class AccountLimitsEntity(
 
     var failureProbability: Double?,
 
+    var failureLostTransaction: Boolean?,
+
     var enableRateLimits: Boolean?,
 
     var requestsPerMinute: Long?,
@@ -39,6 +41,7 @@ class AccountLimitsEntity(
 ) {
     constructor(id: UUID?) : this(
         id,
+        null,
         null,
         null,
         null,

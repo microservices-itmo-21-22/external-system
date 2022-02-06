@@ -35,6 +35,7 @@ class AccountLimitsService(private val repository: AccountLimitsRepository,
             responseTimeUpperBound = 0,
             enableFailures = false,
             failureProbability = 0.0,
+            failureLostTransaction = false,
             enableRateLimits = false,
             requestsPerMinute = 0,
             parallelRequests = 0,
@@ -52,6 +53,7 @@ class AccountLimitsService(private val repository: AccountLimitsRepository,
             responseTimeUpperBound = accountLimitsCreateRequest.responseTimeUpperBound ?: 0,
             enableFailures = accountLimitsCreateRequest.enableFailures,
             failureProbability = accountLimitsCreateRequest.failureProbability ?: 0.0,
+            failureLostTransaction = accountLimitsCreateRequest.failureLostTransaction ?: false,
             enableRateLimits = accountLimitsCreateRequest.enableRateLimits,
             requestsPerMinute = accountLimitsCreateRequest.requestsPerMinute ?: 0,
             parallelRequests = accountLimitsCreateRequest.parallelRequests ?: 0,
@@ -149,6 +151,7 @@ class AccountLimitsService(private val repository: AccountLimitsRepository,
         targetEntity.responseTimeUpperBound = entity.responseTimeUpperBound
         targetEntity.enableFailures = entity.enableFailures
         targetEntity.failureProbability = entity.failureProbability
+        targetEntity.failureLostTransaction = entity.failureLostTransaction
         targetEntity.enableRateLimits = entity.enableRateLimits
         targetEntity.requestsPerMinute = entity.requestsPerMinute
         targetEntity.parallelRequests = entity.parallelRequests

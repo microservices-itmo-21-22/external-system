@@ -14,6 +14,7 @@ class ServerErrorsLimitHandler private constructor(
     private val serverErrorProbability: Double,
 ) : LimitHandler {
     private val logger = KotlinLogging.logger {}
+
     @InjectEventLogger
     private lateinit var eventLogger: EventLogger
 

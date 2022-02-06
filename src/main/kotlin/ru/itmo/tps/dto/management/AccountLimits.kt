@@ -13,6 +13,7 @@ data class AccountLimits (
 
     val enableFailures: Boolean,
     val failureProbability: Double,
+    val failureLostTransaction: Boolean,
 
     val enableRateLimits: Boolean,
     val requestsPerMinute: Long,

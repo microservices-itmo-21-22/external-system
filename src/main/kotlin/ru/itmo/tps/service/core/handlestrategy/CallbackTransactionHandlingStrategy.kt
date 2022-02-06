@@ -11,6 +11,7 @@ import reactor.core.publisher.Mono
 import ru.itmo.tps.config.WebClientConfig.Companion.RETRY_COUNT
 import ru.itmo.tps.config.coroutineExceptionHandler
 import ru.itmo.tps.dto.Transaction
+import ru.itmo.tps.dto.TransactionStatus
 import ru.itmo.tps.dto.management.Account
 import ru.itmo.tps.entity.management.AnswerMethod
 import ru.itmo.tps.exception.TransactionSubmittingFailureException
@@ -48,12 +49,19 @@ class CallbackTransactionHandlingStrategy(private val nonblockingTransactionDisp
                 .complete(account.transactionCost)
 
             transactionService.save(handledTransaction)
-            doCallback(account.callbackUrl!!, handledTransaction)
+
+            if (shouldCallback(account, handledTransaction)) {
+                doCallback(account.callbackUrl!!, handledTransaction)
+            }
+
             rateLimitsService.release(account)
         }
 
         return transaction
     }
+
+    private fun shouldCallback(account: Account, transaction: Transaction): Boolean =
+        !(account.accountLimits.failureLostTransaction && transaction.status == TransactionStatus.FAILURE)
 
     suspend fun doCallback(callbackUrl: String, transaction: Transaction) {
         val callbackMono = webClient
