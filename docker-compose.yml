@@ -1,11 +1,21 @@
-version: "3"
+version: "3.8"
 
 services:
-  postgres:
-    image: postgres:12-alpine
-    ports:
-      - "5544:5432"
+  tps:
+    image: ghcr.io/microservices-itmo-21-22/external-system:${TPS_VERSION:-latest}
     environment:
-      POSTGRES_USER: user
-      POSTGRES_DB: db
-      POSTGRES_PASSWORD: 12345
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/tps
+      SPRING_DATASOURCE_USERNAME: tps
+      SPRING_DATASOURCE_PASSWORD: tps
+
+  postgres:
+    image: postgres:14-alpine
+    environment:
+      POSTGRES_USER: tps
+      POSTGRES_DB: tps
+      POSTGRES_PASSWORD: tps
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+
+volumes:
+  pg_data:
