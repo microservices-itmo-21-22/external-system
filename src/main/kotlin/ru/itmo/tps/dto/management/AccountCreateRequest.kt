@@ -7,5 +7,6 @@ data class AccountCreateRequest(
     val name: String,
     val callbackUrl: String?,
     val projectId: UUID,
-    val answerMethod: AnswerMethod
+    val answerMethod: AnswerMethod,
+    val transactionCost: Long
 )

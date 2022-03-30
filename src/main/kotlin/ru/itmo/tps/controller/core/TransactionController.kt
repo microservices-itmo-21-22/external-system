@@ -1,22 +1,28 @@
 package ru.itmo.tps.controller.core
 
-import kotlinx.coroutines.DelicateCoroutinesApi
-import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.async
-import org.springframework.web.bind.annotation.PostMapping
-import org.springframework.web.bind.annotation.RequestBody
-import org.springframework.web.bind.annotation.RequestMapping
-import org.springframework.web.bind.annotation.RestController
+import org.springframework.web.bind.annotation.*
+import ru.itmo.tps.config.coroutineExceptionHandler
 import ru.itmo.tps.dto.TransactionRequest
 import ru.itmo.tps.service.core.TransactionHandler
+import ru.itmo.tps.service.management.TransactionService
+import java.util.*
 
 @RestController
 @RequestMapping("transactions")
-class TransactionController(private val transactionHandler: TransactionHandler) {
-
+class TransactionController(
+    private val transactionHandler: TransactionHandler,
+    private val transactionDispatcher: CoroutineDispatcher,
+    private val transactionService: TransactionService
+) {
     @PostMapping
-    @DelicateCoroutinesApi
-    fun submitTransactionAsync(@RequestBody transactionRequest: TransactionRequest) = GlobalScope.async {
-        transactionHandler.submitTransaction(transactionRequest)
-    }
+    fun submitTransactionAsync(@RequestBody transactionRequest: TransactionRequest) =
+        CoroutineScope(transactionDispatcher).async(coroutineExceptionHandler) {
+            transactionHandler.submitTransaction(transactionRequest)
+        }
+
+    @GetMapping("{id}")
+    fun getTransaction(@PathVariable id: UUID) = transactionService.findById(id)
 }

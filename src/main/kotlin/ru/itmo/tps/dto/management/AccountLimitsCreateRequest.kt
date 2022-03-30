@@ -9,12 +9,11 @@ data class AccountLimitsCreateRequest(
 
     val enableFailures: Boolean,
     val failureProbability: Double?,
+    val failureLostTransaction: Boolean?,
 
     val enableRateLimits: Boolean,
-    val requestsPerSecond: Long?,
     val requestsPerMinute: Long?,
-    val requestsPerHour: Long?,
-    val requestsPerDay: Long?,
+    val parallelRequests: Long?,
 
     val enableServerErrors: Boolean,
     val serverErrorProbability: Double?

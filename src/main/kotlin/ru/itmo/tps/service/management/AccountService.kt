@@ -16,6 +16,7 @@ import ru.itmo.tps.entity.toEntity
 import ru.itmo.tps.exception.EntityNotFoundException
 import ru.itmo.tps.exception.EntityNotValidException
 import ru.itmo.tps.repository.AccountRepository
+import ru.itmo.tps.service.core.ratelimits.RateLimitsService
 import java.util.*
 
 @Service
@@ -23,7 +24,8 @@ class AccountService(
     private val repository: AccountRepository,
     private val projectService: ProjectService,
     private val accountLimitsService: AccountLimitsService,
-    private val cacheManager: CacheManager
+    private val cacheManager: CacheManager,
+    private val rateLimitsService: RateLimitsService
 ) {
     fun findById(id: UUID): Account = repository.findById(id).orElseThrow { EntityNotFoundException(id) }.toDto()
 
@@ -45,7 +47,8 @@ class AccountService(
             UUID.randomUUID(),
             createRequest.callbackUrl,
             project.toEntity(),
-            accountLimitsService.createDefault().toEntity()
+            accountLimitsService.createDefault().toEntity(),
+            createRequest.transactionCost
         )
 
         validateAndThrow(accountEntity)
@@ -65,7 +68,10 @@ class AccountService(
 
         validateAndThrow(oldEntity)
 
-        return repository.save(oldEntity).toDto()
+        val account = repository.save(oldEntity).toDto()
+        rateLimitsService.evict(account.id)
+
+        return account
     }
 
     @Transactional
@@ -79,6 +85,8 @@ class AccountService(
 
         accountEntity.project?.removeAccount(accountEntity)
         repository.deleteById(accountEntity.id!!)
+
+        rateLimitsService.evict(id)
     }
 
     private fun validateAndThrow(accountEntity: AccountEntity) {
@@ -89,6 +97,10 @@ class AccountService(
         if (accountEntity.accountLimits == null) {
             throw EntityNotValidException("Account limits cannot be null")
         }
+
+        if (accountEntity.transactionCost == null || accountEntity.transactionCost!! < 0) {
+            throw EntityNotValidException("Transaction cost must be positive number")
+        }
     }
 
     private fun map(entity: AccountEntity, targetEntity: AccountEntity) {
@@ -96,5 +108,6 @@ class AccountService(
         targetEntity.callbackUrl = entity.callbackUrl
         targetEntity.clientSecret = entity.clientSecret
         targetEntity.answerMethod = entity.answerMethod
+        targetEntity.transactionCost = entity.transactionCost
     }
 }

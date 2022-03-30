@@ -1,8 +1,10 @@
 package ru.itmo.tps.entity
 
+import ru.itmo.tps.dto.Transaction
 import ru.itmo.tps.dto.management.Account
 import ru.itmo.tps.dto.management.AccountLimits
 import ru.itmo.tps.dto.management.Project
+import ru.itmo.tps.entity.core.TransactionEntity
 import ru.itmo.tps.entity.management.AccountEntity
 import ru.itmo.tps.entity.management.AccountLimitsEntity
 import ru.itmo.tps.entity.management.ProjectEntity
@@ -14,7 +16,8 @@ fun Account.toEntity(): AccountEntity = AccountEntity(
     clientSecret = this.clientSecret,
     callbackUrl = this.callbackUrl,
     project = ProjectEntity(this.projectId),
-    accountLimits = this.accountLimits.toEntity()
+    accountLimits = this.accountLimits.toEntity(),
+    transactionCost = this.transactionCost
 )
 
 fun AccountEntity.toDto(): Account = Account(
@@ -24,7 +27,8 @@ fun AccountEntity.toDto(): Account = Account(
     callbackUrl = this.callbackUrl ?: "",
     clientSecret = this.clientSecret!!,
     projectId = this.project?.id!!,
-    accountLimits = this.accountLimits!!.toDto()
+    accountLimits = this.accountLimits!!.toDto(),
+    transactionCost = this.transactionCost!!
 )
 
 fun ProjectEntity.toDto(): Project = Project(
@@ -39,6 +43,24 @@ fun Project.toEntity(): ProjectEntity = ProjectEntity(
     accounts = this.accounts.map { it.toEntity() }.toMutableSet()
 )
 
+fun Transaction.toEntity(): TransactionEntity = TransactionEntity(
+    id = this.id,
+    submitTime = this.submitTime,
+    completedTime = this.completedTime,
+    status = this.status,
+    account = AccountEntity(this.accountId),
+    cost = this.cost
+)
+
+fun TransactionEntity.toDto(): Transaction = Transaction(
+    id = this.id!!,
+    submitTime = this.submitTime!!,
+    completedTime = this.completedTime,
+    status = this.status!!,
+    accountId = this.account?.id!!,
+    cost = this.cost
+)
+
 fun AccountLimitsEntity.toDto(): AccountLimits = AccountLimits(
     id = this.id!!,
     acceptTransactions = this.acceptTransactions!!,
@@ -47,11 +69,10 @@ fun AccountLimitsEntity.toDto(): AccountLimits = AccountLimits(
     responseTimeUpperBound = this.responseTimeUpperBound!!,
     enableFailures = this.enableFailures!!,
     failureProbability = this.failureProbability!!,
+    failureLostTransaction = this.failureLostTransaction!!,
     enableRateLimits = this.enableRateLimits!!,
-    requestsPerSecond = this.requestsPerSecond!!,
     requestsPerMinute = this.requestsPerMinute!!,
-    requestsPerHour = this.requestsPerHour!!,
-    requestsPerDay = this.requestsPerDay!!,
+    parallelRequests = this.parallelRequests!!,
     enableServerErrors = this.enableServerErrors!!,
     serverErrorProbability = this.serverErrorProbability!!
 )
@@ -64,11 +85,10 @@ fun AccountLimits.toEntity(): AccountLimitsEntity = AccountLimitsEntity(
     responseTimeUpperBound = this.responseTimeUpperBound,
     enableFailures = this.enableFailures,
     failureProbability = this.failureProbability,
+    failureLostTransaction = this.failureLostTransaction,
     enableRateLimits = this.enableRateLimits,
-    requestsPerSecond = this.requestsPerSecond,
     requestsPerMinute = this.requestsPerMinute,
-    requestsPerHour = this.requestsPerHour,
-    requestsPerDay = this.requestsPerDay,
+    parallelRequests = this.parallelRequests,
     enableServerErrors = this.enableServerErrors,
     serverErrorProbability = this.serverErrorProbability
 )

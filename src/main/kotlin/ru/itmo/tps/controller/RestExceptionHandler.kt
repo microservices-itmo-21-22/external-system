@@ -11,10 +11,7 @@ import org.springframework.web.context.request.WebRequest
 import org.springframework.web.context.request.async.AsyncRequestTimeoutException
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler
 import ru.itmo.tps.dto.ApiError
-import ru.itmo.tps.exception.EntityNotFoundException
-import ru.itmo.tps.exception.EntityNotValidException
-import ru.itmo.tps.exception.NotAuthenticatedException
-import ru.itmo.tps.exception.TransactionSubmittingFailureException
+import ru.itmo.tps.exception.*
 import java.time.Instant
 
 @ControllerAdvice
@@ -35,10 +32,18 @@ class RestExceptionHandler : ResponseEntityExceptionHandler() {
     }
 
     @ExceptionHandler(value = [TransactionSubmittingFailureException::class])
-    fun handleEntityNotFound(exception: TransactionSubmittingFailureException): ResponseEntity<Any> {
+    fun handleTransactionSubmittingFailure(exception: TransactionSubmittingFailureException): ResponseEntity<Any> {
         return ResponseEntity(
             composeApiError(exception.message ?: "Internal server error"),
             HttpStatus.INTERNAL_SERVER_ERROR
+        )
+    }
+
+    @ExceptionHandler(value = [RateLimitExceededException::class])
+    fun handleTransactionSubmittingFailure(exception: RateLimitExceededException): ResponseEntity<Any> {
+        return ResponseEntity(
+            composeApiError(exception.message ?: "Internal server error"),
+            HttpStatus.TOO_MANY_REQUESTS
         )
     }
 

@@ -12,10 +12,16 @@ import ru.itmo.tps.entity.toEntity
 import ru.itmo.tps.exception.EntityNotFoundException
 import ru.itmo.tps.exception.EntityNotValidException
 import ru.itmo.tps.repository.AccountLimitsRepository
+import ru.itmo.tps.repository.AccountRepository
+import ru.itmo.tps.service.core.ratelimits.RateLimitsService
 import java.util.*
 
 @Service
-class AccountLimitsService(private val repository: AccountLimitsRepository) {
+class AccountLimitsService(private val repository: AccountLimitsRepository,
+                           private val accountRepository: AccountRepository,
+                           private val rateLimitsService: RateLimitsService
+) {
+
     @Cacheable(value = ["accountLimitsCache"], key = "#id")
     fun findById(id: UUID): AccountLimits =
         repository.findById(id).orElseThrow { EntityNotFoundException(id) }.toDto()
@@ -29,11 +35,10 @@ class AccountLimitsService(private val repository: AccountLimitsRepository) {
             responseTimeUpperBound = 0,
             enableFailures = false,
             failureProbability = 0.0,
+            failureLostTransaction = false,
             enableRateLimits = false,
-            requestsPerSecond = 0,
             requestsPerMinute = 0,
-            requestsPerHour = 0,
-            requestsPerDay = 0,
+            parallelRequests = 0,
             enableServerErrors = false,
             serverErrorProbability = 0.0
         )
@@ -48,11 +53,10 @@ class AccountLimitsService(private val repository: AccountLimitsRepository) {
             responseTimeUpperBound = accountLimitsCreateRequest.responseTimeUpperBound ?: 0,
             enableFailures = accountLimitsCreateRequest.enableFailures,
             failureProbability = accountLimitsCreateRequest.failureProbability ?: 0.0,
+            failureLostTransaction = accountLimitsCreateRequest.failureLostTransaction ?: false,
             enableRateLimits = accountLimitsCreateRequest.enableRateLimits,
-            requestsPerSecond = accountLimitsCreateRequest.requestsPerSecond ?: 0,
             requestsPerMinute = accountLimitsCreateRequest.requestsPerMinute ?: 0,
-            requestsPerHour = accountLimitsCreateRequest.requestsPerHour ?: 0,
-            requestsPerDay = accountLimitsCreateRequest.requestsPerDay ?: 0,
+            parallelRequests = accountLimitsCreateRequest.parallelRequests ?: 0,
             enableServerErrors = accountLimitsCreateRequest.enableServerErrors,
             serverErrorProbability = accountLimitsCreateRequest.serverErrorProbability ?: 0.0
         )
@@ -73,12 +77,16 @@ class AccountLimitsService(private val repository: AccountLimitsRepository) {
 
         validateAndThrow(oldEntity)
 
-        return repository.save(oldEntity).toDto()
+        val accountLimits = repository.save(oldEntity).toDto()
+        accountRepository.findByAccountLimitsId(id).ifPresent { rateLimitsService.evict(it.id!!) }
+
+        return accountLimits
     }
 
     @CacheEvict(value = ["accountLimitsCache"], key = "#id")
     fun deleteById(id: UUID) {
         repository.deleteById(id)
+        accountRepository.findByAccountLimitsId(id).ifPresent { rateLimitsService.evict(it.id!!) }
     }
 
     fun validateAndThrow(accountLimitsEntity: AccountLimitsEntity) {
@@ -112,7 +120,13 @@ class AccountLimitsService(private val repository: AccountLimitsRepository) {
         }
 
         if (accountLimitsEntity.enableRateLimits == true) {
-            // TODO: 07.08.2021 add validation for rate limits
+            if (accountLimitsEntity.requestsPerMinute!! <= 0) {
+                errors += "Requests per seconds must be positive"
+            }
+
+            if (accountLimitsEntity.parallelRequests!! <= 0) {
+                errors += "Parallel requests must be positive"
+            }
         }
 
         if (accountLimitsEntity.enableServerErrors == true) {
@@ -137,11 +151,10 @@ class AccountLimitsService(private val repository: AccountLimitsRepository) {
         targetEntity.responseTimeUpperBound = entity.responseTimeUpperBound
         targetEntity.enableFailures = entity.enableFailures
         targetEntity.failureProbability = entity.failureProbability
+        targetEntity.failureLostTransaction = entity.failureLostTransaction
         targetEntity.enableRateLimits = entity.enableRateLimits
-        targetEntity.requestsPerSecond = entity.requestsPerSecond
         targetEntity.requestsPerMinute = entity.requestsPerMinute
-        targetEntity.requestsPerHour = entity.requestsPerHour
-        targetEntity.requestsPerDay = entity.requestsPerDay
+        targetEntity.parallelRequests = entity.parallelRequests
         targetEntity.enableServerErrors = entity.enableServerErrors
         targetEntity.serverErrorProbability = entity.serverErrorProbability
     }

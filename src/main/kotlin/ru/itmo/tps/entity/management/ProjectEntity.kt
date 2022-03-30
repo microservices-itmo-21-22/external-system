@@ -2,6 +2,7 @@ package ru.itmo.tps.entity.management
 
 import lombok.Getter
 import lombok.Setter
+import ru.itmo.tps.entity.BaseEntity
 import java.util.*
 import javax.persistence.*
 

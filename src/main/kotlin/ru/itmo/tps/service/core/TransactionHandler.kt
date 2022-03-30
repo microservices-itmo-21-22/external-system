@@ -10,6 +10,7 @@ import ru.itmo.tps.exception.EntityNotFoundException
 import ru.itmo.tps.exception.NotAuthenticatedException
 import ru.itmo.tps.service.core.handlestrategy.TransactionHandlingStrategy
 import ru.itmo.tps.service.management.AccountService
+import java.util.*
 
 @Service
 @RequiredArgsConstructor
@@ -17,7 +18,7 @@ class TransactionHandler(
     private val accountService: AccountService,
     private val transactionHandlingStrategies: List<TransactionHandlingStrategy>
 ) {
-    fun submitTransaction(transactionRequest: TransactionRequest): Transaction {
+    suspend fun submitTransaction(transactionRequest: TransactionRequest): Transaction {
         val account: Account
         try {
             account = accountService.findByClientSecret(transactionRequest.clientSecret)
@@ -25,9 +26,14 @@ class TransactionHandler(
             throw NotAuthenticatedException("Cannot find account with given client secret")
         }
 
-        val transaction = Transaction(transactionRequest.transactionId, TransactionStatus.PENDING)
+        var transaction = Transaction(
+            id = UUID.randomUUID(),
+            status = TransactionStatus.PENDING,
+            accountId = account.id,
+            completedTime = null
+        )
 
-        selectStrategy(account).handle(transaction, account.accountLimits)
+        transaction = selectStrategy(account).handle(transaction, account)
 
         return transaction
     }

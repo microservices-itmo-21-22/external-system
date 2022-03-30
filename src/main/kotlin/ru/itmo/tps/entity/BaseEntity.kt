@@ -1,11 +1,9 @@
-package ru.itmo.tps.entity.management
+package ru.itmo.tps.entity
 
 import lombok.Getter
 import lombok.Setter
 import org.hibernate.Hibernate
 import java.util.*
-import javax.persistence.Entity
-import javax.persistence.GeneratedValue
 import javax.persistence.Id
 import javax.persistence.MappedSuperclass
 
@@ -14,7 +12,6 @@ import javax.persistence.MappedSuperclass
 @MappedSuperclass
 open class BaseEntity(
     @Id
-    @GeneratedValue
     var id: UUID?
 ) {
     override fun equals(other: Any?): Boolean {
