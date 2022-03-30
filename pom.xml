@@ -20,7 +20,6 @@
         <kotlin.version>1.5.20</kotlin.version>
         <kotlin.logging.version>1.12.5</kotlin.logging.version>
         <kotlin.coroutines.version>1.5.1</kotlin.coroutines.version>
-        <kotlin.compiler.incremental>true</kotlin.compiler.incremental>
         
         <openapi.version>1.5.10</openapi.version>
         <common-lib.version>0.8.0-SNAPSHOT</common-lib.version>

@@ -36,7 +36,7 @@ jobs:
             target/classes/
             target/test-classes/
             target/kotlin-ic/
-          key: ${{ runner.os }}-build-${{ hashFiles('**/pom.xml') }}
+          key: ${{ runner.os }}-build-v2-${{ hashFiles('**/pom.xml') }}
           restore-keys: |
             ${{ runner.os }}-build-
 
