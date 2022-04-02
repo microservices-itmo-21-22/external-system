@@ -11,18 +11,19 @@ import ru.itmo.tps.service.management.TransactionService
 import java.util.*
 
 @RestController
-@RequestMapping("transactions")
-class TransactionController(
+@RequestMapping("/transactions/payment")
+class PaymentTransactionController (
     private val transactionHandler: TransactionHandler,
     private val transactionDispatcher: CoroutineDispatcher,
     private val transactionService: TransactionService
 ) {
+
     @PostMapping
     fun submitTransactionAsync(@RequestBody transactionRequest: TransactionRequest) =
         CoroutineScope(transactionDispatcher).async(coroutineExceptionHandler) {
             transactionHandler.submitTransaction(transactionRequest)
         }
 
-    @GetMapping("{id}")
+    @GetMapping("/{id}")
     fun getTransaction(@PathVariable id: UUID) = transactionService.findById(id)
 }
