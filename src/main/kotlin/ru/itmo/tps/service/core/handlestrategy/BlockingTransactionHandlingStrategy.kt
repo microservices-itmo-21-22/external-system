@@ -11,9 +11,10 @@ import ru.itmo.tps.service.management.TransactionService
 
 @Service
 @RequiredArgsConstructor
-class BlockingTransactionHandlingStrategy(private val transactionService: TransactionService,
-                                          private val rateLimitsService: RateLimitsService) :
-    TransactionHandlingStrategy {
+class BlockingTransactionHandlingStrategy(
+    private val transactionService: TransactionService,
+    private val rateLimitsService: RateLimitsService
+    ) : TransactionHandlingStrategy {
 
     override fun supports(account: Account) = account.answerMethod == AnswerMethod.TRANSACTION
 
@@ -21,18 +22,14 @@ class BlockingTransactionHandlingStrategy(private val transactionService: Transa
         try {
             rateLimitsService.acquire(account)
 
-            val limitHandlerChainBuilder = LimitHandlerChainBuilder(account.accountLimits)
+            val handlerChain = LimitHandlerChainBuilder(account.accountLimits)
+                .enableServerErrors()
+                .enableResponseTimeVariation()
+                .enableTransactionFailure()
+                .build()
 
-            limitHandlerChainBuilder.enableServerErrors()
-            limitHandlerChainBuilder.enableResponseTimeVariation()
-            limitHandlerChainBuilder.enableTransactionFailure()
-
-            val handlerChain = limitHandlerChainBuilder.build()
-            val completedTransaction = handlerChain.handle(transaction).complete(account.transactionCost)
-
-            transactionService.save(completedTransaction)
-
-            return completedTransaction
+            return handlerChain.handle(transaction).complete(account.transactionCost)
+                .also { transactionService.save(it) }
         } finally {
             rateLimitsService.release(account)
         }
