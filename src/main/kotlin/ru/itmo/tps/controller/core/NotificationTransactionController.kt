@@ -5,6 +5,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.async
 import org.springframework.web.bind.annotation.*
 import ru.itmo.tps.config.coroutineExceptionHandler
+import ru.itmo.tps.dto.NotificationTransactionRequest
 import ru.itmo.tps.dto.TransactionRequest
 import ru.itmo.tps.service.core.TransactionHandler
 import ru.itmo.tps.service.management.TransactionService
@@ -19,7 +20,7 @@ class NotificationTransactionController(
 ) {
 
     @PostMapping
-    fun submitTransactionAsync(@RequestBody transactionRequest: TransactionRequest) =
+    fun submitTransactionAsync(@RequestBody transactionRequest: NotificationTransactionRequest) =
         CoroutineScope(transactionDispatcher).async(coroutineExceptionHandler) {
             transactionHandler.submitTransaction(transactionRequest)
         }

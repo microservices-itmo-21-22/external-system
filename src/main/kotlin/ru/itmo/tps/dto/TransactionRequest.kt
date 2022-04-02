@@ -2,6 +2,6 @@ package ru.itmo.tps.dto
 
 import java.util.*
 
-data class TransactionRequest (
-    val clientSecret: UUID
+open class TransactionRequest (
+    private val clientSecret: UUID
 )
