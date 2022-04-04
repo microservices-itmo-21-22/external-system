@@ -5,6 +5,7 @@ import org.springframework.stereotype.Service
 import ru.itmo.tps.dto.Transaction
 import ru.itmo.tps.dto.TransactionRequest
 import ru.itmo.tps.dto.TransactionStatus
+import ru.itmo.tps.dto.TransactionType
 import ru.itmo.tps.dto.management.Account
 import ru.itmo.tps.exception.EntityNotFoundException
 import ru.itmo.tps.exception.NotAuthenticatedException
@@ -20,7 +21,8 @@ class TransactionHandler(
     private val transactionHandlingStrategies: List<TransactionHandlingStrategy>,
     private val transactionMetrics: TransactionMetrics
 ) {
-    suspend fun submitTransaction(transactionRequest: TransactionRequest): Transaction {
+    suspend fun submitTransaction(transactionRequest: TransactionRequest,
+                                  transactionType: TransactionType): Transaction {
         val account: Account = try {
             accountService.findByClientSecret(transactionRequest.clientSecret)
         } catch (e: EntityNotFoundException) {
@@ -35,18 +37,22 @@ class TransactionHandler(
         )
 
         return runCatching {
-            transactionMetrics.executeTransactionTimed(account.name) {
+            transactionMetrics.executeTransactionTimed(transactionType, account.name) {
                 selectStrategy(account).handle(transaction, account)
             }.also {
                 when (it.status) {
                     TransactionStatus.SUCCESS -> {
-                        transactionMetrics.countSuccessfulTransaction(account.name)
-                        transactionMetrics.countSpentMoney(account.name, it.cost?.toDouble() ?: 0.0)
+                        transactionMetrics.countSuccessfulTransaction(transactionType, account.name)
+                        transactionMetrics.countSpentMoney(
+                            transactionType,
+                            account.name,
+                            it.cost?.toDouble() ?: 0.0
+                        )
                     }
-                    else -> transactionMetrics.countFailedTransaction(account.name)
+                    else -> transactionMetrics.countFailedTransaction(transactionType, account.name)
                 }
             }
-        }.onFailure { transactionMetrics.countTransactionError(account.name) }.getOrThrow()
+        }.onFailure { transactionMetrics.countTransactionError(transactionType, account.name) }.getOrThrow()
     }
 
     private fun selectStrategy(account: Account): TransactionHandlingStrategy =
