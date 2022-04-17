@@ -2,8 +2,9 @@
 
 ## Docker compose
 
-To run TPS + Postgres run:
+To run TPS + Postgres run in microservices infra:
 ```shell
+cp docker-compose.override.{example,}.yml 
 docker-compose up -d
 ```
 
