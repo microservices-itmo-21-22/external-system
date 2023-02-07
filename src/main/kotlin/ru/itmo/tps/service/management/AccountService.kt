@@ -1,5 +1,6 @@
 package ru.itmo.tps.service.management
 
+import mu.KotlinLogging
 import org.springframework.cache.CacheManager
 import org.springframework.cache.annotation.CacheEvict
 import org.springframework.cache.annotation.Cacheable
@@ -27,6 +28,9 @@ class AccountService(
     private val cacheManager: CacheManager,
     private val rateLimitsService: RateLimitsService
 ) {
+
+    private val log = KotlinLogging.logger {}
+
     fun findById(id: UUID): Account = repository.findById(id).orElseThrow { EntityNotFoundException(id) }.toDto()
 
     fun findAccountLimitsById(id: UUID): AccountLimits =
@@ -53,7 +57,9 @@ class AccountService(
 
         validateAndThrow(accountEntity)
 
-        return repository.save(accountEntity).toDto()
+        val account = repository.save(accountEntity)
+        log.info { "Account ${account.name} created, id=${account.id}" }
+        return account.toDto()
     }
 
     @Caching(

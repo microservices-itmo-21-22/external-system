@@ -15,7 +15,7 @@
     <version>0.0.8-SNAPSHOT</version>
 
     <properties>
-        <github/>
+        <github>microservices-itmo-21-22/external-system</github>
 
         <java.version>11</java.version>
         <kotlin.version>1.6.10</kotlin.version>
@@ -181,27 +181,12 @@
 
     <repositories>
         <repository>
-            <id>central</id>
-            <url>https://repo1.maven.org/maven2/</url>
-        </repository>
-        <!-- <repository>
-            <id>itmo-central</id>
-            <url>http://77.234.215.138:30031/artifactory/libs-release</url>
-        </repository> -->
-        <repository>
-            <id>itmo-snapshots</id>
-            <url>http://77.234.215.138:30031/artifactory/libs-snapshot</url>
+            <id>github</id>
+            <url>https://maven.pkg.github.com/microservices-itmo-21-22/common-lib</url>
             <snapshots>
                 <enabled>true</enabled>
             </snapshots>
         </repository>
-        <!-- <repository>
-          <id>github</id>
-          <url>https://maven.pkg.github.com/${github}</url>
-          <snapshots>
-            <enabled>true</enabled>
-          </snapshots>
-        </repository> -->
     </repositories>
 
     <build>

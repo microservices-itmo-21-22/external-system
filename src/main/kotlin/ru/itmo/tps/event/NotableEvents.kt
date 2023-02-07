@@ -3,10 +3,10 @@ package ru.itmo.tps.event
 import com.itmo.microservices.commonlib.logging.NotableEvent
 
 enum class NotableEvents(private val template: String): NotableEvent {
+    I_TRANSACTION_PROCESSING_STARTED("Transaction processing started, clientSecret={}"),
     E_TRANSACTION_SUBMISSION_ERROR("Could not submit transaction with id={}"),
     I_TRANSACTION_SUCCEEDED("Transaction succeeded, id={}"),
-    I_TRANSACTION_FAILURE("Transaction failed, id={}"),
-
+    I_TRANSACTION_FAILURE("Transaction failed, id={}")
     ;
 
     override fun getName(): String {
