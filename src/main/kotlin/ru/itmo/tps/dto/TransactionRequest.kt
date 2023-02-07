@@ -1,7 +1,8 @@
 package ru.itmo.tps.dto
 
 import java.util.*
+import javax.validation.constraints.NotNull
 
-data class TransactionRequest (
-    val clientSecret: UUID
+abstract class TransactionRequest (
+    @field:NotNull val clientSecret: UUID
 )

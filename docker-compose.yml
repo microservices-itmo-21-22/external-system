@@ -3,6 +3,8 @@ version: "3.8"
 services:
   tps:
     image: ghcr.io/microservices-itmo-21-22/external-system:${TPS_VERSION:-latest}
+    ports:
+      - "8082:8080"
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/tps
       SPRING_DATASOURCE_USERNAME: tps
