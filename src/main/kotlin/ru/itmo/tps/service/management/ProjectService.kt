@@ -1,5 +1,6 @@
 package ru.itmo.tps.service.management
 
+import mu.KotlinLogging
 import org.springframework.cache.annotation.CacheEvict
 import org.springframework.cache.annotation.Cacheable
 import org.springframework.stereotype.Service
@@ -14,13 +15,19 @@ import java.util.*
 
 @Service
 class ProjectService(private val repository: ProjectRepository) {
+
+    private val log = KotlinLogging.logger {}
+
+
     @Cacheable(value = ["projectCache"], key = "#id")
     fun findById(id: UUID): Project = repository.findById(id).orElseThrow { EntityNotFoundException(id) }.toDto()
 
     fun create(projectCreateRequest: ProjectCreateRequest): Project {
         val projectEntity = ProjectEntity(UUID.randomUUID(), projectCreateRequest.name, mutableSetOf())
 
-        return repository.save(projectEntity).toDto()
+        val project = repository.save(projectEntity)
+        log.info { "Project ${project.name} created, id=${project.id}" }
+        return project.toDto()
     }
 
     @CacheEvict(value = ["projectCache"], key = "#id")
